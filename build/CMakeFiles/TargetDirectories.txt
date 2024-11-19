@@ -1,0 +1,3 @@
+/home/michaela/straw/MichaelGarfield/cell_study/build/CMakeFiles/straw.dir
+/home/michaela/straw/MichaelGarfield/cell_study/build/CMakeFiles/edit_cache.dir
+/home/michaela/straw/MichaelGarfield/cell_study/build/CMakeFiles/rebuild_cache.dir
