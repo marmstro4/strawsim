@@ -6,6 +6,7 @@
 #include <TApplication.h>
 #include <TCanvas.h>
 #include <TH1F.h>
+#include <TH2D.h>
 #include <TEllipse.h>
 #include <TLine.h>
 #include <tuple>
@@ -56,8 +57,13 @@ int rebin = 1;
 int SigBins = static_cast<int>(std::round((SigF-SigI)/tstep));
 int avg_lim = 10;
 double var_tol = 0.01;
+double remv_tol = 0.10;
+double func_tol = 0.15;
+double parstep = 5;
 
 TH1D *RecoZ = new TH1D("RecoZ", "RecoZ",10000,-100,100);
+TH2D *WidthRad = new TH2D("WidthRad", "WidthRad",100,-0.9,0.9,5000,0,5000);
+TH2D *FullWidthRad = new TH2D("FullWidthRad", "FullWidthRad",100,-0.9,0.9,5000,0,5000);
 
 //Wire radius [cm]
 double rWire = 25e-4;
@@ -67,6 +73,7 @@ double rTube = 1;
 
 //Tube speration [cm]
 double VerticalOffset = 10;
+double vert_offset = 10;
 
 //Voltage
 double vWire = 2730;
@@ -97,6 +104,17 @@ double slantfunct(double *x, double *params) {
     double denominator = 1 + exp(-0.5 * pow((xx - mu) / sigma, 2));
 
     return gaussian / denominator - alpha * (xx - mu) + beta;
+}
+
+double slopefunc(double *x, double *params) {
+    double xx = x[0];          // x is the independent variable
+    double A = params[0];      // Amplitude
+    double B = params[1];     // Mean
+    double C = params[2];  // Standard deviation
+    double D = params[3];  // Plateau control parameter
+
+    // Gaussian numerator
+    return A*exp(B*xx)+C+D*xx;
 }
 
 void SetGas(string GasName, MediumMagboltz* gas) {
@@ -204,17 +222,17 @@ std::pair<double,double> SignalProcessing(std::vector<double> x, std::vector<dou
 }
 
 
-void PlotStraws(const std::vector<double>& zCenter, const std::vector<double>& yCenter, double radius, TCanvas* canvas) {
+void PlotStraws(const std::vector<double>& zCenter, const std::vector<double>& yCenter) {
     // Check if the inputs are valid
 
+    TCanvas* canvas = new TCanvas("canvas", "Straws and Track", 800, 800);
     // Create a canvas
-
     canvas->SetFixedAspectRatio(); // Ensure equal scaling on both axes
     canvas->DrawFrame(-15, 0, 15, 30); // Set the drawing frame (xMin, yMin, xMax, yMax)
 
     // Draw the circles (straws)
     for (size_t i = 0; i < yCenter.size(); ++i) {
-        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], radius);
+        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], rTube);
         straw->SetFillStyle(0); // No fill
         straw->SetLineColor(kBlack);
         straw->Draw();
@@ -224,8 +242,10 @@ void PlotStraws(const std::vector<double>& zCenter, const std::vector<double>& y
     canvas->Update();
 }
 
-std::pair<std::vector<double>, std::vector<double>> GetStrawCenters(double strawRadius, double verticalOffset,
-                     std::vector<double>& yCenter, std::vector<double>& zCenter) {
+std::pair<std::vector<double>, std::vector<double>> GetStrawCenters(double strawRadius, double verticalOffset) {
+
+    std::vector<double> yCenter, zCenter;
+
     // Calculate the number of tubes needed to cover +/-10 cm
     int nTubes = static_cast<int>(5 / strawRadius) + 1;
 
@@ -397,7 +417,7 @@ void PlotTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, TrackHeed* trac
 }
 
 
-std::tuple<double, double, double, std::vector<double>, std::vector<double>, std::vector<double>> SetTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, Sensor* sensor, TrackHeed* track, double energy, double xdist) {
+std::tuple<double, double, double, std::vector<double>, std::vector<double>, std::vector<double>> SetTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, Sensor* sensor, TrackHeed* track, double energy, double xdist, std::vector<double> dirvect) {
 
 
   string particle = "proton";
@@ -408,15 +428,22 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
   drift->SetSensor(sensor);
   drift->EnableIonTail();
 
-  double x0 = xdist;//rTube*dis(gen);
-  double y0 = -sqrt(rTube*rTube - x0*x0);
+ //double x0 = xdist;//rTube*dis(gen);
+  //double y0 = -sqrt(rTube*rTube - x0*x0);
   double DOCA= 999999, simR;
-  track->NewTrack(x0, y0, 0, 0, 0, 1, 1);
+  track->NewTrack(0, 0, 0, 0, dirvect[0], dirvect[1], dirvect[2]);
 
   std::vector<double> trk_x,trk_y,trk_z;
 
+  if (track->GetClusterDensity()==0) {
+      trk_x.push_back(0); trk_y.push_back(0); trk_z.push_back(0);
+      return std::make_tuple(0.5, 300, 500, trk_x, trk_y, trk_z);
+    }
+
   for (const auto& cluster : track->GetClusters()) {
       //cout<<cluster.x<<" "<<cluster.y<<" "<<cluster.z<<" "<<cluster.t<<endl;
+
+
 
       trk_x.push_back(cluster.x);
       trk_y.push_back(cluster.y);
@@ -435,6 +462,7 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
 
     }
 
+
     // Signal processing
         std::vector<double> x(SigBins);
         std::vector<double> y(SigBins);
@@ -450,12 +478,193 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
             //cout<<x[i]<<" "<<y[i]<<endl;
         }
 
+
+
     auto [width, full_width] = SignalProcessing(x,y, x_basket);
 
 
     //SignalPlot(x,y);
 
     return std::make_tuple(DOCA, width, full_width, trk_x, trk_y, trk_z);
+
+}
+
+std::vector<double> plotwidth(std::vector<double> width_l, std::vector<double> full_width_l, std::vector<double> DOCA_l) {
+
+ std::vector<double> params;
+
+  TGraph *GWidth = new TGraph();
+  for (size_t i = 0; i < width_l.size(); ++i) {
+    GWidth->SetPoint(i,width_l[i],DOCA_l[i]);
+ }
+
+ TF1 *slope = new TF1("slopefunc", slopefunc,
+                      *min_element(std::begin(width_l),std::end(width_l)),
+                      *max_element(std::begin(width_l),std::end(width_l)),4);
+
+ TF1 *slope_remv = new TF1("slopefunc", slopefunc,
+                      *min_element(std::begin(width_l),std::end(width_l)),
+                      *max_element(std::begin(width_l),std::end(width_l)),4);
+
+ // Fit the graph
+ GWidth->Fit(slope, "RQ+");
+
+  TCanvas *canvas = new TCanvas("canvas", "Two TGraphs", 800, 600);
+
+  std::vector<double> width_remv;
+  std::vector<double> DOCA_remv;
+
+  for (int i = 0; i<width_l.size(); i++) {
+      double func = slope->GetParameter(0)*exp(slope->GetParameter(1)*width_l[i])+slope->GetParameter(2)+slope->GetParameter(3)*width_l[i];
+
+      //cout<<width_l[i]<<" "<<func<<endl;
+      double func_diff = abs(DOCA_l[i]-func)/DOCA_l[i];
+
+      if (func_diff<func_tol) {
+          width_remv.push_back(width_l[i]);
+          DOCA_remv.push_back(DOCA_l[i]);
+          //cout<<"no_remv"<<endl;
+
+    }
+
+    }
+
+    TGraph *GWidth_remv = new TGraph();
+
+  for (size_t i = 0; i < width_remv.size(); ++i) {
+    GWidth_remv->SetPoint(i,width_remv[i],DOCA_remv[i]);
+  }
+
+    GWidth_remv->Fit(slope_remv, "RQ+");
+    //GWidth_remv->Draw("AP");
+    //slope_remv->Draw("P SAME");
+
+    params.push_back(slope_remv->GetParameter(0));
+    params.push_back(slope_remv->GetParameter(1));
+    params.push_back(slope_remv->GetParameter(2));
+    params.push_back(slope_remv->GetParameter(3));
+
+    return params;
+
+}
+
+double getDOCA(double width, std::vector<double> params) {
+    return  params[0]*exp(params[1]*width)+params[2]+params[3]*width;
+}
+
+//, DriftLineRKF* drift, , TrackHeed* track
+
+
+std::vector<double> GetDTCorr(Sensor* sensor, ComponentAnalyticField* cmp, double energy, std::vector<double> dirvect) {
+
+    std::vector<double> width_l, full_width_l, j_l, DOCA_l;
+
+    for (double i =-99; i<99; i=i+parstep) {
+
+    if ((i==66) || (i==-66) ||(i==-52) || (i ==52)|| (i==-38)|| (i==38)|| (i==-26)|| (i==26) || (i==-16)|| (i==16)|| (i==-15)|| (i==15)|| (i==-32.5)|| (i==32.5)|| (i==-26.5)|| (i==26.5)|| (i==-19.5)|| (i==19.5)||(i==-15.5)|| (i==15.5)||(i==-2.5)|| (i==2.5)) continue;
+
+    double j = i/100.0;
+
+    TrackHeed track;
+    DriftLineRKF drift;
+    sensor->ClearSignal();
+
+    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, j, dirvect);
+
+    width_l.push_back(width);
+    full_width_l.push_back(full_width);
+    j_l.push_back(j);
+    DOCA_l.push_back(DOCA);
+  }
+
+    return plotwidth(width_l,full_width_l,DOCA_l);
+
+}
+
+double GetAvgResidual(Sensor* sensor, ComponentAnalyticField* cmp, std::vector<double> params, double energy, std::vector<double> dirvect) {
+
+    double sum = 0;
+    double step = 0.1, start = 0.1*rTube, stop = 0.9*rTube;
+
+    for (double i=start; i<stop; i=i+step) {
+        TrackHeed track;
+        DriftLineRKF drift;
+        sensor->ClearSignal();
+        auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, i, dirvect);
+
+        sum+=abs(DOCA-getDOCA(width,params))/DOCA;
+
+    }
+
+    return sum/((stop-start)/step);
+
+}
+
+void SetCellArray(ComponentAnalyticField* cmp, MediumMagboltz* gas) {
+
+    auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+
+    cmp->AddTube(rTube, vTube, 0, "tube 0");
+    cmp->AddWire(0, ycell[0] , 2*rWire, vWire, "cell 0");
+    cmp->SetMedium(gas);
+
+    //PlotStraws(zcell,ycell);
+
+}
+
+std::vector<double> hemidir() {
+
+    // Azimuthal angle (theta), uniformly distributed between 0 and 2pi
+    double theta = 2.0 * M_PI * rand() / RAND_MAX;
+
+    // Polar angle (phi), uniformly distributed in the upper hemisphere
+    double cos_phi = (rand() / double(RAND_MAX));  // Uniformly distributed between 0 and 1
+    double phi = acos(cos_phi);  // Convert to polar angle
+
+    // Convert spherical coordinates to Cartesian coordinates
+    return {sin(phi) * cos(theta),sin(phi) * sin(theta),cos(phi)  };
+
+}
+
+std::vector<double> sectordir() {
+
+    // Polar angle (theta), uniformly distributed between 0 and pi
+    double theta = 1.0 * M_PI * rand() / RAND_MAX;
+
+    // Convert spherical coordinates to Cartesian coordinates
+    return {0, cos(theta), sin(theta)} ;
+
+}
+
+void PlotCellsTracks(std::vector<double> pos_z, std::vector<double> pos_y, std::vector<double> zCenter, std::vector<double> yCenter) {
+   TCanvas* canvas = new TCanvas("canvas", "Straws and Track", 800, 800);
+    // Create a canvas
+    canvas->SetFixedAspectRatio(); // Ensure equal scaling on both axes
+    canvas->DrawFrame(-15, -30, 15, 30); // Set the drawing frame (xMin, yMin, xMax, yMax)
+
+    // Draw the circles (straws)
+    for (size_t i = 0; i < yCenter.size(); ++i) {
+        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], rTube);
+        straw->SetFillStyle(0); // No fill
+        straw->SetLineColor(kBlack);
+        straw->Draw();
+    }
+
+    // Update the canvas to render the drawing
+    canvas->Update();
+
+    TGraph* graph = new TGraph(pos_z.size(), pos_z.data(), pos_y.data());
+
+    // Set the marker style for the points (e.g., a circle)
+    graph->SetMarkerStyle(21);  // 21: circle
+    graph->SetMarkerColor(kRed);  // Red points
+    graph->SetMarkerSize(3);  // Marker size
+
+    // Draw the graph on the canvas
+    graph->Draw("same");
+
+    canvas->Update();
+
 
 }
 
@@ -468,35 +677,54 @@ int main(int argc, char* argv[]) {
   SetGas(P10, &gas);
 
   ComponentAnalyticField cmp;
-  SetWire(&cmp, &gas);
+ //SetWire(&cmp, &gas);
+  SetCellArray(&cmp, &gas);
 
   Sensor sensor;
   SetSensor(&sensor, &cmp);
 
   double energy = 100e6;
+
+ // std::vector<double> dirvect = sectordir();
+  std::vector<double> dirvect = {0,0,1};
+
   TrackHeed track;
   DriftLineRKF drift;
+  sensor.ClearSignal();
 
-  //Event loop scanning full x dimension
-  //std::vector<double> DOCA_l, width_l, full_width_l;
-  std::ofstream outfile1("width.csv", std::ios::app);
-  std::ofstream outfile2("full_width.csv", std::ios::app);
+  auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, 0.7, dirvect);
 
-  for (int i = -99; i<99; i++) {
-      double j = 0.7;//i/100.0;
-    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, j);
-    //DOCA_l.push_back(DOCA);
-    //width_l.push_back(width);
-    //full_width_l.push_back(full_width);
-    outfile1<<width<<endl;
-    outfile2<<full_width<<endl;
-    cout<<j<<endl;
+  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+
+  //pos_z = {0,0,0,0,0,0};
+  //pos_y = {0,1,2,3,4,10};
+
+  PlotCellsTracks(pos_y, pos_z, zcell, ycell);
+
+  /*
+
+  for (double i = 100; i<125; i=i+5) {
+
+     energy = i*1e6;
+
+     std::vector<double> dirvect {0,0,1};
+
+    std::vector<double> params = GetDTCorr(&sensor, &cmp, energy, dirvect);
+
+    double avg_residual = GetAvgResidual(&sensor, &cmp, params, energy, dirvect);
+
+    cout<<avg_residual<<endl;
+
   }
+  //Event loop scanning full x dimension
+  //std::ofstream outfile1("residual.csv", std::ios::app);
 
-  outfile1.close();
-  outfile2.close();
+
+  //outfile1.close();
 
   //PlotTrack(&cmp, &drift, &track, &sensor, pos_y, pos_z);
+
+  */
 
   app.Run();
   return 0;

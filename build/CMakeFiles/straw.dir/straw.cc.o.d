@@ -306,6 +306,10 @@ CMakeFiles/straw.dir/straw.cc.o: \
  /home/michaela/Downloads/root_src/hist/hist/inc/TFitResultPtr.h \
  /usr/include/c++/13/cfloat \
  /usr/lib/gcc/x86_64-linux-gnu/13/include/float.h \
+ /home/michaela/Downloads/root_src/hist/hist/inc/TH2D.h \
+ /home/michaela/Downloads/root_src/hist/hist/inc/TH2.h \
+ /home/michaela/Downloads/root_src/math/matrix/inc/TMatrixFBasefwd.h \
+ /home/michaela/Downloads/root_src/math/matrix/inc/TMatrixDBasefwd.h \
  /home/michaela/Downloads/root_src/graf2d/graf/inc/TEllipse.h \
  /home/michaela/Downloads/root_src/graf2d/graf/inc/TLine.h \
  /home/michaela/Downloads/root_src/hist/hist/inc/TGraph.h \

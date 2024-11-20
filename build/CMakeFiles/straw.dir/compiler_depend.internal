@@ -123,6 +123,8 @@ CMakeFiles/straw.dir/straw.cc.o
  /home/michaela/Downloads/root_src/hist/hist/inc/TGraph.h
  /home/michaela/Downloads/root_src/hist/hist/inc/TH1.h
  /home/michaela/Downloads/root_src/hist/hist/inc/TH1F.h
+ /home/michaela/Downloads/root_src/hist/hist/inc/TH2.h
+ /home/michaela/Downloads/root_src/hist/hist/inc/TH2D.h
  /home/michaela/Downloads/root_src/math/mathcore/inc/Math/Factory.h
  /home/michaela/Downloads/root_src/math/mathcore/inc/Math/Functor.h
  /home/michaela/Downloads/root_src/math/mathcore/inc/Math/IFunction.h

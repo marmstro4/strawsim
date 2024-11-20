@@ -122,6 +122,8 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
   /home/michaela/Downloads/root_src/hist/hist/inc/TGraph.h \
   /home/michaela/Downloads/root_src/hist/hist/inc/TH1.h \
   /home/michaela/Downloads/root_src/hist/hist/inc/TH1F.h \
+  /home/michaela/Downloads/root_src/hist/hist/inc/TH2.h \
+  /home/michaela/Downloads/root_src/hist/hist/inc/TH2D.h \
   /home/michaela/Downloads/root_src/math/mathcore/inc/Math/Factory.h \
   /home/michaela/Downloads/root_src/math/mathcore/inc/Math/Functor.h \
   /home/michaela/Downloads/root_src/math/mathcore/inc/Math/IFunction.h \
@@ -735,11 +737,19 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 
 /usr/include/c++/13/bits/unordered_map.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h:
+
+/usr/include/c++/13/bits/unique_ptr.h:
+
+/usr/include/c++/13/bits/unique_lock.h:
+
 /home/michaela/Downloads/root_src/math/mathcore/inc/Math/IFunction.h:
 
 /home/michaela/Downloads/root_src/core/foundation/inc/RVersion.h:
 
 /home/michaela/Downloads/root_src/core/base/inc/TVersionCheck.h:
+
+/usr/include/c++/13/bits/stl_numeric.h:
 
 /usr/include/x86_64-linux-gnu/c++/13/bits/ctype_base.h:
 
@@ -821,10 +831,6 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 
 /home/michaela/Downloads/root_src/core/meta/inc/TDataType.h:
 
-/usr/include/c++/13/cassert:
-
-/usr/include/c++/13/bits/cpp_type_traits.h:
-
 /usr/include/c++/13/cctype:
 
 /home/michaela/Downloads/root_src/math/mathcore/inc/Math/Functor.h:
@@ -854,12 +860,6 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 /usr/include/x86_64-linux-gnu/bits/uintn-identity.h:
 
 /home/michaela/Downloads/root_src/core/cont/inc/TArray.h:
-
-/home/michaela/Downloads/root_src/math/mathcore/inc/Math/MinimizerOptions.h:
-
-/home/michaela/Downloads/root_src/core/cont/inc/TObjArray.h:
-
-/usr/include/c++/13/bits/stl_numeric.h:
 
 /home/michaela/Downloads/root_src/core/base/inc/Buttons.h:
 
@@ -920,12 +920,6 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 /usr/include/c++/13/bits/locale_conv.h:
 
 /home/michaela/Downloads/garfield/garfieldpp/install/include/Garfield/Solid.hh:
-
-/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
-
-/usr/include/math.h:
-
-/home/michaela/Downloads/root_src/math/mathcore/inc/Math/Minimizer.h:
 
 /usr/include/c++/13/pstl/pstl_config.h:
 
@@ -1141,6 +1135,18 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 
 /usr/include/c++/13/bits/random.tcc:
 
+/usr/include/c++/13/cassert:
+
+/usr/include/c++/13/bits/cpp_type_traits.h:
+
+/home/michaela/Downloads/root_src/hist/hist/inc/TH2D.h:
+
+/usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
+
+/home/michaela/Downloads/root_src/graf2d/graf/inc/TLine.h:
+
+/home/michaela/Downloads/root_src/math/matrix/inc/TMatrixDSparse.h:
+
 /home/michaela/Downloads/root_src/core/foundation/inc/TError.h:
 
 /home/michaela/Downloads/root_src/core/base/inc/TVirtualPad.h:
@@ -1177,6 +1183,16 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 
 /home/michaela/Downloads/root_src/core/cont/inc/TArrayL64.h:
 
+/usr/include/x86_64-linux-gnu/bits/types/__FILE.h:
+
+/usr/include/math.h:
+
+/home/michaela/Downloads/root_src/math/mathcore/inc/Math/Minimizer.h:
+
+/home/michaela/Downloads/root_src/core/cont/inc/TObjArray.h:
+
+/home/michaela/Downloads/root_src/math/mathcore/inc/Math/MinimizerOptions.h:
+
 /home/michaela/Downloads/root_src/math/mathcore/inc/Math/Types.h:
 
 /usr/include/c++/13/iterator:
@@ -1188,12 +1204,6 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 /usr/include/c++/13/ext/concurrence.h:
 
 /home/michaela/Downloads/root_src/math/matrix/inc/TMatrixD.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/sigset_t.h:
-
-/home/michaela/Downloads/root_src/graf2d/graf/inc/TLine.h:
-
-/home/michaela/Downloads/root_src/math/matrix/inc/TMatrixDSparse.h:
 
 /home/michaela/Downloads/root_src/math/matrix/inc/TMatrixDUtils.h:
 
@@ -1236,10 +1246,6 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 /usr/include/c++/13/bits/algorithmfwd.h:
 
 /usr/include/c++/13/bits/align.h:
-
-/usr/include/x86_64-linux-gnu/bits/types/mbstate_t.h:
-
-/usr/include/c++/13/bits/unique_ptr.h:
 
 /usr/include/c++/13/bits/alloc_traits.h:
 
@@ -1351,6 +1357,8 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 
 /usr/include/c++/13/bits/postypes.h:
 
+/home/michaela/Downloads/root_src/hist/hist/inc/TH2.h:
+
 /usr/include/c++/13/bits/parse_numbers.h:
 
 /usr/include/c++/13/bits/std_abs.h:
@@ -1404,5 +1412,3 @@ CMakeFiles/straw.dir/straw.cc.o: /home/michaela/straw/MichaelGarfield/cell_study
 /usr/include/x86_64-linux-gnu/bits/flt-eval-method.h:
 
 /usr/include/c++/13/bits/streambuf_iterator.h:
-
-/usr/include/c++/13/bits/unique_lock.h:
