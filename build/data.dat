@@ -1,0 +1,14 @@
+MediumMagboltz::SetComposition: Ar/CO2 (90/10)
+MediumMagboltz::LoadGasFile:
+    Reading file /home/michaela/straw/MichaelGarfield/cell_study/gas/ar_90_co2_10_atms_3.gas.
+    Version 13.
+    Gas composition set to Ar/CO2 (90/10).
+MediumMagboltz::LoadMobility:
+    Read 36 values from file /home/michaela/Downloads/garfield/garfieldpp/Data/IonMobility_Ar+_Ar.txt
+Sensor::AddElectrode:
+    Added readout electrode "s".
+    All signals are reset.
+Sensor::SetTimeWindow: Resetting all signals.
+Sensor::AddElectrode:
+    Added readout electrode "s2".
+    All signals are reset.

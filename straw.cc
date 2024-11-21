@@ -419,7 +419,6 @@ void PlotTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, TrackHeed* trac
 
 std::tuple<double, double, double, std::vector<double>, std::vector<double>, std::vector<double>> SetTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, Sensor* sensor, TrackHeed* track, double energy, double xdist, std::vector<double> dirvect) {
 
-
   string particle = "proton";
 
   track->SetParticle(particle);
@@ -430,8 +429,8 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
 
  //double x0 = xdist;//rTube*dis(gen);
   //double y0 = -sqrt(rTube*rTube - x0*x0);
-  double DOCA= 999999, simR;
-  track->NewTrack(0, 0, 0, 0, dirvect[0], dirvect[1], dirvect[2]);
+  double DOCA = 999999, simR;
+  track->NewTrack(0, 0.01, 0, 0, dirvect[0], dirvect[1], dirvect[2]);
 
   std::vector<double> trk_x,trk_y,trk_z;
 
@@ -440,10 +439,9 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
       return std::make_tuple(0.5, 300, 500, trk_x, trk_y, trk_z);
     }
 
+
   for (const auto& cluster : track->GetClusters()) {
       //cout<<cluster.x<<" "<<cluster.y<<" "<<cluster.z<<" "<<cluster.t<<endl;
-
-
 
       trk_x.push_back(cluster.x);
       trk_y.push_back(cluster.y);
@@ -629,42 +627,31 @@ std::vector<double> hemidir() {
 std::vector<double> sectordir() {
 
     // Polar angle (theta), uniformly distributed between 0 and pi
-    double theta = 1.0 * M_PI * rand() / RAND_MAX;
+    double theta = 0.5 * M_PI * rand() / RAND_MAX + 0.25 * M_PI;
 
     // Convert spherical coordinates to Cartesian coordinates
-    return {0, cos(theta), sin(theta)} ;
+    return {0, sin(theta), cos(theta)} ;
 
 }
 
-void PlotCellsTracks(std::vector<double> pos_z, std::vector<double> pos_y, std::vector<double> zCenter, std::vector<double> yCenter) {
+void PlotCellsTracks(std::vector<double> DOCA_l, std::vector<double> zCenter, std::vector<double> yCenter) {
    TCanvas* canvas = new TCanvas("canvas", "Straws and Track", 800, 800);
     // Create a canvas
     canvas->SetFixedAspectRatio(); // Ensure equal scaling on both axes
-    canvas->DrawFrame(-15, -30, 15, 30); // Set the drawing frame (xMin, yMin, xMax, yMax)
+    canvas->DrawFrame(-30, -30, 30, 30); // Set the drawing frame (xMin, yMin, xMax, yMax)
 
     // Draw the circles (straws)
     for (size_t i = 0; i < yCenter.size(); ++i) {
         TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], rTube);
         straw->SetFillStyle(0); // No fill
         straw->SetLineColor(kBlack);
-        straw->Draw();
+        straw->Draw("same");
+
+        TEllipse* DOCA = new TEllipse(zCenter[i], yCenter[i], DOCA_l[i]);
+        DOCA->SetFillStyle(0); // No fill
+        DOCA->SetLineColor(kRed);
+        DOCA->Draw("same");
     }
-
-    // Update the canvas to render the drawing
-    canvas->Update();
-
-    TGraph* graph = new TGraph(pos_z.size(), pos_z.data(), pos_y.data());
-
-    // Set the marker style for the points (e.g., a circle)
-    graph->SetMarkerStyle(21);  // 21: circle
-    graph->SetMarkerColor(kRed);  // Red points
-    graph->SetMarkerSize(3);  // Marker size
-
-    // Draw the graph on the canvas
-    graph->Draw("same");
-
-    canvas->Update();
-
 
 }
 
@@ -677,29 +664,39 @@ int main(int argc, char* argv[]) {
   SetGas(P10, &gas);
 
   ComponentAnalyticField cmp;
- //SetWire(&cmp, &gas);
-  SetCellArray(&cmp, &gas);
+  SetWire(&cmp, &gas);
+  //SetCellArray(&cmp, &gas);
 
   Sensor sensor;
   SetSensor(&sensor, &cmp);
 
+  //Generate and shoot track
   double energy = 100e6;
 
- // std::vector<double> dirvect = sectordir();
-  std::vector<double> dirvect = {0,0,1};
+  //Doing DOCA multiple times
+
+  //Generate layers and RNG DOCA
+  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+  std::vector<double> DOCA_l;
+
+  for (int i = 0; i<1; i=i+1) {
 
   TrackHeed track;
   DriftLineRKF drift;
   sensor.ClearSignal();
+  std::vector<double> dirvect = sectordir();
 
-  auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, 0.7, dirvect);
+  auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, rTube, dirvect);
 
-  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+  DOCA_l.push_back(DOCA);
 
-  //pos_z = {0,0,0,0,0,0};
-  //pos_y = {0,1,2,3,4,10};
+ }
 
-  PlotCellsTracks(pos_y, pos_z, zcell, ycell);
+  PlotCellsTracks(DOCA_l, zcell, ycell);
+
+  //cout<<pos_y[0]<<" "<<pos_z[0]<<endl;
+
+  //auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
 
   /*
 
