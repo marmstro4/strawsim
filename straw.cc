@@ -69,11 +69,11 @@ TH2D *FullWidthRad = new TH2D("FullWidthRad", "FullWidthRad",100,-0.9,0.9,5000,0
 double rWire = 25e-4;
 
 //Tube radius [cm]
-double rTube = 1;
+double rTube = 0.5;
 
 //Tube speration [cm]
 double VerticalOffset = 10;
-double vert_offset = 10;
+double vert_offset = 2.6;
 
 //Voltage
 double vWire = 2730;
@@ -222,13 +222,13 @@ std::pair<double,double> SignalProcessing(std::vector<double> x, std::vector<dou
 }
 
 
-void PlotStraws(const std::vector<double>& zCenter, const std::vector<double>& yCenter) {
+void PlotStraws(const std::vector<double>& yCenter, const std::vector<double>& zCenter) {
     // Check if the inputs are valid
 
     TCanvas* canvas = new TCanvas("canvas", "Straws and Track", 800, 800);
     // Create a canvas
     canvas->SetFixedAspectRatio(); // Ensure equal scaling on both axes
-    canvas->DrawFrame(-15, 0, 15, 30); // Set the drawing frame (xMin, yMin, xMax, yMax)
+    canvas->DrawFrame(-20, -20, 20, 20); // Set the drawing frame (xMin, yMin, xMax, yMax)
 
     // Draw the circles (straws)
     for (size_t i = 0; i < yCenter.size(); ++i) {
@@ -253,21 +253,69 @@ std::pair<std::vector<double>, std::vector<double>> GetStrawCenters(double straw
     for (int i = 0; i <= 2 * nTubes; ++i) {
         yCenter.push_back(verticalOffset);
         zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
     }
 
     // Generate the second layer
     for (int i = 0; i <= 2 * nTubes; ++i) {
         yCenter.push_back(verticalOffset + std::sqrt(3) * strawRadius);
         zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius + strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
     }
 
     // Generate the third layer
     for (int i = 0; i <= 2 * nTubes; ++i) {
         yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius);
         zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
     }
 
-    return std::make_pair(yCenter, zCenter);
+     // Generate the fourth layer
+    for (int i = 0; i <= 2 * nTubes; ++i) {
+        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 2* strawRadius);
+        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
+        strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
+    }
+
+    // Generate the fourth layer
+    for (int i = 0; i <= 2 * nTubes; ++i) {
+        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 4* strawRadius);
+        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
+    }
+
+    // Generate the fourth layer
+    for (int i = 0; i <= 2 * nTubes; ++i) {
+        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 6* strawRadius);
+        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
+        strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
+    }
+
+    // Generate the fourth layer
+    for (int i = 0; i <= 2 * nTubes; ++i) {
+        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 8* strawRadius);
+        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
+    }
+
+    // Generate the fourth layer
+    for (int i = 0; i <= 2 * nTubes; ++i) {
+        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 10* strawRadius);
+        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
+        strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
+    }
+
+    // Generate the fourth layer
+    for (int i = 0; i <= 2 * nTubes; ++i) {
+        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 12* strawRadius);
+        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
+    }
+
+    return std::make_pair(zCenter, yCenter);
 
 }
 
@@ -360,42 +408,7 @@ std::pair<double, double> FitTrackFromRadii(const std::vector<double>& zCenter, 
     return std::make_pair(m, zOrigin);
 }
 
-void PlotTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, TrackHeed* track, Sensor* sensor, std::vector<double> trk_y,std::vector<double> trk_z) {
-
-  /*
-  TCanvas cD("cD", "Drift View", 600, 600);
-  ViewDrift driftView;
-  driftView.SetCanvas(&cD);
-
-  ViewCell cellView;
-  cellView.SetCanvas(&cD);
-  cellView.SetComponent(cmp);
-
-  drift->EnablePlotting(&driftView);
-  track->EnablePlotting(&driftView);
-  cellView.SetComponent(cmp);
-  cellView.SetCanvas(&cD);
-
-  cellView.Plot2d();
-  driftView.Plot(true, true);
-  */
-
-  TCanvas* canvas = new TCanvas("canvas", "Straw Tube Plot", 800, 600);
-  std::vector<double> zCenter = {0.0},yCenter = {0.0};
-
-  canvas->SetFixedAspectRatio(); // Ensure equal scaling on both axes
-  canvas->DrawFrame(-2, -2, 2, 2); // Set the drawing frame (xMin, yMin, xMax, yMax)
-
-    // Draw the circles (straws)
-    for (size_t i = 0; i < yCenter.size(); ++i) {
-        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], rTube);
-        straw->SetFillStyle(0); // No fill
-        straw->SetLineColor(kBlack);
-        straw->Draw();
-    }
-
-    // Update the canvas to render the drawing
-    canvas->Update();
+void PlotTrack(std::vector<double> trk_y,std::vector<double> trk_z) {
 
   TGraph* graph = new TGraph(trk_z.size(), trk_z.data(), trk_y.data());
 
@@ -407,17 +420,10 @@ void PlotTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, TrackHeed* trac
   // Draw the graph on the canvas
   graph->Draw("same");
 
-  canvas->Update();
-
-  //TCanvas cS = new TCanvas("cs", "", 600, 600);
-  //sensor->PlotSignal("s", &cS);
-
-  cin.get();
-
 }
 
 
-std::tuple<double, double, double, std::vector<double>, std::vector<double>, std::vector<double>> SetTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, Sensor* sensor, TrackHeed* track, double energy, double xdist, std::vector<double> dirvect) {
+std::tuple<double, double, double, std::vector<double>, std::vector<double>, std::vector<double>> SetTrack(ComponentAnalyticField* cmp, DriftLineRKF* drift, Sensor* sensor, TrackHeed* track, double energy, double xdist, std::vector<double> dirvect, std::vector<double> posvect) {
 
   string particle = "proton";
 
@@ -430,15 +436,16 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
  //double x0 = xdist;//rTube*dis(gen);
   //double y0 = -sqrt(rTube*rTube - x0*x0);
   double DOCA = 999999, simR;
-  track->NewTrack(0, 0.01, 0, 0, dirvect[0], dirvect[1], dirvect[2]);
+  track->NewTrack(posvect[0], posvect[1], posvect[2], 0, dirvect[0], dirvect[1], dirvect[2]);
 
   std::vector<double> trk_x,trk_y,trk_z;
 
+  /*
   if (track->GetClusterDensity()==0) {
       trk_x.push_back(0); trk_y.push_back(0); trk_z.push_back(0);
       return std::make_tuple(0.5, 300, 500, trk_x, trk_y, trk_z);
     }
-
+  */
 
   for (const auto& cluster : track->GetClusters()) {
       //cout<<cluster.x<<" "<<cluster.y<<" "<<cluster.z<<" "<<cluster.t<<endl;
@@ -567,7 +574,7 @@ std::vector<double> GetDTCorr(Sensor* sensor, ComponentAnalyticField* cmp, doubl
     DriftLineRKF drift;
     sensor->ClearSignal();
 
-    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, j, dirvect);
+    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, j, dirvect, {0, 0.01,0});
 
     width_l.push_back(width);
     full_width_l.push_back(full_width);
@@ -588,7 +595,7 @@ double GetAvgResidual(Sensor* sensor, ComponentAnalyticField* cmp, std::vector<d
         TrackHeed track;
         DriftLineRKF drift;
         sensor->ClearSignal();
-        auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, i, dirvect);
+        auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, i, dirvect, {0,0.01,0});
 
         sum+=abs(DOCA-getDOCA(width,params))/DOCA;
 
@@ -635,29 +642,198 @@ std::vector<double> sectordir() {
 }
 
 void PlotCellsTracks(std::vector<double> DOCA_l, std::vector<double> zCenter, std::vector<double> yCenter) {
-   TCanvas* canvas = new TCanvas("canvas", "Straws and Track", 800, 800);
-    // Create a canvas
-    canvas->SetFixedAspectRatio(); // Ensure equal scaling on both axes
-    canvas->DrawFrame(-30, -30, 30, 30); // Set the drawing frame (xMin, yMin, xMax, yMax)
-
     // Draw the circles (straws)
     for (size_t i = 0; i < yCenter.size(); ++i) {
-        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], rTube);
-        straw->SetFillStyle(0); // No fill
-        straw->SetLineColor(kBlack);
-        straw->Draw("same");
 
         TEllipse* DOCA = new TEllipse(zCenter[i], yCenter[i], DOCA_l[i]);
         DOCA->SetFillStyle(0); // No fill
-        DOCA->SetLineColor(kRed);
+        DOCA->SetLineColor(kBlue);
         DOCA->Draw("same");
     }
+
+}
+
+double RandomBetween(double min, double max) {
+    return min + (static_cast<double>(rand()) / RAND_MAX) * (max - min);
+}
+
+std::pair<double, double> GenerateRandomLineParameters() {
+    // Seed the random number generator
+    srand(static_cast<unsigned>(time(nullptr)));
+
+    // Generate a random angle between pi/4 and 3pi/4
+    static std::random_device rd; // Random device for seeding
+    static std::mt19937 gen(rd()); // Mersenne Twister generator
+    static std::uniform_real_distribution<> dis(3*M_PI / 8, 5 * M_PI / 8);
+
+    const double angle = dis(gen);
+
+    // Compute slope (m) of the line
+    double m = std::tan(angle);
+
+    // Compute a random y-intercept (c)
+    double c = RandomBetween(-0.1, 0.1); // Example range for intercept
+
+    return {m, c};
+}
+
+/*
+std::pair<std::vector<double>, std::vector<double>> hits(double slope, double intercept, std::vector<double> ycell, std::vector<double> zcell) {
+
+    std::vector<std::pair<double, double>> ystraws;
+    std::vector<std::pair<double, double>> zstraws;
+    std::vector<double> yhits, zhits;
+
+    for (double step = 0; step<15; step=step+0.1) {
+
+        double ypos = slope*step + intercept;
+
+        for (int i = 0; i<zcell.size(); i++) {
+            double diff = sqrt(pow(ycell[i]-ypos,2)+pow(zcell[i]-step,2));
+
+            if (diff<rTube) {
+                ystraws.push_back({ypos, ycell[i]});
+                zstraws.push_back({step, zcell[i]});
+            }
+
+        }
+
+    }
+
+    // Sort the vector based on the second element of the pairs
+    std::sort(ystraws.begin(), ystraws.end(), [](const auto& a, const auto& b) {
+        return a.second < b.second;
+    });
+
+    std::sort(zstraws.begin(), zstraws.end(), [](const auto& a, const auto& b) {
+        return a.second < b.second;
+    });
+
+    // Use std::unique to remove pairs with duplicate second elements
+    auto last = std::unique(ystraws.begin(), ystraws.end(), [](const auto& a, const auto& b) {
+        return a.second == b.second;
+    });
+
+    auto last2 = std::unique(zstraws.begin(), zstraws.end(), [](const auto& a, const auto& b) {
+        return a.second == b.second;
+    });
+
+    // Resize the vector to remove redundant elements
+    ystraws.erase(last, ystraws.end());
+    zstraws.erase(last2, zstraws.end());
+
+    // Iterate through the vector and collect the first elements
+    for (const auto& pair : ystraws) {
+        yhits.push_back(pair.first);
+    }
+
+    // Iterate through the vector and collect the first elements
+    for (const auto& pair : zstraws) {
+        zhits.push_back(pair.first);
+    }
+
+    return {yhits,zhits};
+
+}
+
+*/
+
+std::tuple<std::vector<double>, std::vector<double>,std::vector<double>,std::vector<double>> hits(double slope, double intercept, std::vector<double> ycell, std::vector<double> zcell) {
+
+    std::vector<std::pair<double, double>> hits;
+    std::vector<double> yhits,ystraw;
+    std::vector<double> zhits,zstraw;
+
+    for (int i = 0; i<zcell.size(); i++) {
+
+        double A = 1 + slope*slope;
+        double B = 2*(slope*intercept-slope*ycell[i]-zcell[i]);
+        double C = ycell[i]*ycell[i]-rTube*rTube+zcell[i]*zcell[i]-2*intercept*ycell[i]+intercept*intercept;
+
+        if (B*B-4*A*C<0) {continue;}
+
+        if (B*B-4*A*C==0) {continue;}
+
+        if (B*B-4*A*C>0) {
+
+            double plus_z = (-B+sqrt(B*B-4*A*C))/(2*A);
+            double minus_z = (-B-sqrt(B*B-4*A*C))/(2*A);
+            double plus_y = slope*plus_z+intercept;
+            double minus_y = slope*minus_z+intercept;
+
+            //search for earliest solution
+            double diffplus = sqrt(plus_z*plus_z+plus_y*plus_y);
+            double diffminus = sqrt(minus_z*minus_z+minus_y*minus_y);
+
+            //cout<<"test ("<<plus_z<<","<<plus_y<<") ("<<minus_z<<","<<minus_y<<") "<<endl;
+
+            if (diffplus>diffminus) {
+                yhits.push_back(minus_y);
+                zhits.push_back(minus_z);
+                ystraw.push_back(ycell[i]);
+                zstraw.push_back(zcell[i]);
+            }
+
+            if (diffplus<diffminus) {
+                yhits.push_back(plus_y);
+                zhits.push_back(plus_z);
+                ystraw.push_back(ycell[i]);
+                zstraw.push_back(zcell[i]);
+            }
+
+        }
+
+
+    }
+
+    return std::make_tuple(yhits, zhits,ystraw, zstraw);
+
+}
+
+std::pair<double, double> FitRadii(const std::vector<double> z, const std::vector<double> y, std::vector<double> DOCA_l ) {
+
+    // Set up the system of equations
+    int n = z.size();
+    double sum_z = 0, sum_y = 0, sum_zy = 0, sum_zz = 0;
+    for (int i = 0; i < n; ++i) {
+        sum_z += z[i];
+        sum_y += y[i];
+        sum_zy += z[i] * y[i];
+        sum_zz += z[i] * z[i];
+    }
+
+    // Calculate slope (m) and intercept (b)
+    double m = (n * sum_zy - sum_z * sum_y) / (n * sum_zz - sum_z * sum_z);
+    double c = (sum_y - m * sum_z) / n;
+
+    return std::make_pair(m,c);
 
 }
 
 int main(int argc, char* argv[]) {
 
   TApplication app("app", &argc, argv);
+
+  //Get track dir
+  std::vector<double> trk_y,trk_z;
+
+  //auto [slope, intercept] = GenerateRandomLineParameters();
+    double slope = 0.75, intercept = 0;
+  for (double i = 0; i<15; i=i+0.1) {
+    trk_z.push_back(i);
+    trk_y.push_back(slope*i+intercept);
+  }
+
+  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+  auto [yhits, zhits, ystraw, zstraw] = hits(slope, intercept, ycell, zcell);
+
+  //Get Straw arrray
+  PlotStraws(ycell, zcell);
+  PlotTrack(trk_y,trk_z);
+
+  //Setup Garfield sim for each hit
+  std::vector<double> dirvect = {0, slope, 1};
+  double energy = 100e6;
 
   string P10 = "ar_90_co2_10_atms_3.gas";
   MediumMagboltz gas("ar", 90., "co2", 10.);
@@ -670,58 +846,31 @@ int main(int argc, char* argv[]) {
   Sensor sensor;
   SetSensor(&sensor, &cmp);
 
-  //Generate and shoot track
-  double energy = 100e6;
-
-  //Doing DOCA multiple times
-
-  //Generate layers and RNG DOCA
-  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
   std::vector<double> DOCA_l;
+  std::vector<int> hitI;
 
-  for (int i = 0; i<1; i=i+1) {
+  for (int i = 0; i<yhits.size(); i++) {
 
-  TrackHeed track;
-  DriftLineRKF drift;
-  sensor.ClearSignal();
-  std::vector<double> dirvect = sectordir();
+    TrackHeed track;
+    DriftLineRKF drift;
+    sensor.ClearSignal();
 
-  auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, rTube, dirvect);
+    std::vector<double> posvect = {0, yhits[i]-ystraw[i], zhits[i]-zstraw[i]};
 
-  DOCA_l.push_back(DOCA);
+    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, rTube, dirvect, posvect);
 
- }
-
-  PlotCellsTracks(DOCA_l, zcell, ycell);
-
-  //cout<<pos_y[0]<<" "<<pos_z[0]<<endl;
-
-  //auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
-
-  /*
-
-  for (double i = 100; i<125; i=i+5) {
-
-     energy = i*1e6;
-
-     std::vector<double> dirvect {0,0,1};
-
-    std::vector<double> params = GetDTCorr(&sensor, &cmp, energy, dirvect);
-
-    double avg_residual = GetAvgResidual(&sensor, &cmp, params, energy, dirvect);
-
-    cout<<avg_residual<<endl;
+    DOCA_l.push_back(DOCA);
 
   }
-  //Event loop scanning full x dimension
-  //std::ofstream outfile1("residual.csv", std::ios::app);
 
+  PlotCellsTracks(DOCA_l, zstraw, ystraw);
 
-  //outfile1.close();
+  auto [fitslope, fitintercept] = FitRadii(zstraw,ystraw,DOCA_l);
 
-  //PlotTrack(&cmp, &drift, &track, &sensor, pos_y, pos_z);
+  cout<<fitintercept<<" "<<0.0<<" "<<fitintercept*fitintercept<<endl;
+  cout<<fitslope<<" "<<slope<<" "<<endl;
+  cout<<(intercept-1*fitintercept)/fitslope<<" "<<0.0<<" "<<endl;
 
-  */
 
   app.Run();
   return 0;
