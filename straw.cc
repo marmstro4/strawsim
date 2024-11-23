@@ -49,7 +49,6 @@ std::uniform_real_distribution<> dis(-1, 1); // Range [0.0, 1.0)
 string GarPath = "/home/michaela/Downloads/garfield/garfieldpp/";
 string GasPath = "/home/michaela/straw/MichaelGarfield/cell_study/gas/";
 
-
 double tstep = 0.25; //choose so devisible by rebin
 double SigI = 0;
 double SigF = 5000;
@@ -61,7 +60,7 @@ double remv_tol = 0.10;
 double func_tol = 0.15;
 double parstep = 5;
 
-TH1D *RecoZ = new TH1D("RecoZ", "RecoZ",10000,-100,100);
+TH1D *RecoZ = new TH1D("RecoZ", "RecoZ",1000,-100,100);//[cm]
 TH2D *WidthRad = new TH2D("WidthRad", "WidthRad",100,-0.9,0.9,5000,0,5000);
 TH2D *FullWidthRad = new TH2D("FullWidthRad", "FullWidthRad",100,-0.9,0.9,5000,0,5000);
 
@@ -117,17 +116,16 @@ double slopefunc(double *x, double *params) {
     return A*exp(B*xx)+C+D*xx;
 }
 
+double RandomBetween(double min, double max) {
+    return min + (static_cast<double>(rand()) / RAND_MAX) * (max - min);
+}
+
 void SetGas(string GasName, MediumMagboltz* gas) {
 
     gas->SetPressure(3 * 760.);
     gas->SetTemperature(293.15);
     gas->LoadGasFile(GasPath + GasName);
     gas->LoadIonMobility(GarPath + "Data/IonMobility_Ar+_Ar.txt");
-
-    //ViewMedium mediumView;
-    //mediumView.SetMedium(gas);
-    //mediumView.PlotElectronVelocity('e');
-
 
 }
 
@@ -182,10 +180,16 @@ void SignalPlot(std::vector<double> x, std::vector<double> y) {
 
 std::pair<double,double> SignalProcessing(std::vector<double> x, std::vector<double> y, std::vector<double> x_basket) {
 
+    //cout<<"test 14"<<endl;
+
     //Get maximum charge and time when
     int amp_in = std::distance(y.begin(), max_element(std::begin(y), std::end(y)));
     double amp = y[amp_in];
-    int UpTail;
+    int UpTail = 1;
+
+    //cout<<"test 15"<<endl;
+
+    if (x_basket.size()>= 2) {
 
     //Determine smoothness
     for (size_t i=amp_in+2*avg_lim; i<x.size(); i++) {
@@ -212,12 +216,23 @@ std::pair<double,double> SignalProcessing(std::vector<double> x, std::vector<dou
             break;
         }
 
+    }
+
+    //cout<<"test 31"<<endl;
         //cout<<i*tstep<<" "<<y[i]<<" "<<move_avg<<" "<<var<<endl;
+    return std::make_pair(UpTail*tstep-x_basket.front()*tstep,x_basket.back()-x_basket.front()); //[ns]
+    }
+
+    else {
+            //cout<<"test 30"<<endl;
+        return std::make_pair(5000,5000); //[ns]
 
     }
 
+    //cout<<"test 16"<<endl;
+
     //cout<<UpTail*tstep<<" "<<x_basket.front()*tstep<<endl;
-    return std::make_pair(UpTail*tstep-x_basket.front()*tstep,x_basket.back()-x_basket.front()); //[ns]
+
 
 }
 
@@ -242,170 +257,70 @@ void PlotStraws(const std::vector<double>& yCenter, const std::vector<double>& z
     canvas->Update();
 }
 
+void PlotRadii(std::vector<double> DOCA_l, std::vector<double> radius, std::vector<double> yCenter, const std::vector<double> zCenter) {
+
+    // Draw the circles (straws)
+    for (size_t i = 0; i < yCenter.size(); ++i) {
+        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], radius[i]-0.01, radius[i]);
+        straw->SetLineColor(kRed);
+        straw->Draw("same");
+    }
+
+    // Draw the circles (straws)
+    for (size_t i = 0; i < yCenter.size(); ++i) {
+        TEllipse* straw = new TEllipse(zCenter[i], yCenter[i], DOCA_l[i]-0.01, DOCA_l[i]);
+        straw->SetFillColor(0);
+        straw->Draw("same");
+    }
+
+}
+
 std::pair<std::vector<double>, std::vector<double>> GetStrawCenters(double strawRadius, double verticalOffset) {
 
     std::vector<double> yCenter, zCenter;
 
     // Calculate the number of tubes needed to cover +/-10 cm
     int nTubes = static_cast<int>(5 / strawRadius) + 1;
+    int nTubesH = static_cast<int>(2 / strawRadius) + 1;
 
-    // Generate the first layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
+    for (int j = 0; j<=2*nTubesH; j++) {
 
-    // Generate the second layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + std::sqrt(3) * strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius + strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
+        for (int i = 0; i <= 2 * nTubes; ++i) {
 
-    // Generate the third layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
+            if (j==0) {
+                yCenter.push_back(verticalOffset);
+                zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+            }
+        }
 
-     // Generate the fourth layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 2* strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
-        strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
+        if (j==1) {
+            for (int i = 0; i <= 2 * nTubes; ++i) {
+                yCenter.push_back(verticalOffset + std::sqrt(3) * strawRadius);
+                zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +     strawRadius);
+            }
+        }
 
-    // Generate the fourth layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 4* strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
+        if ((j!=0) && (j!=1) && (j % 2 == 0)) {
+            for (int i = 0; i <= 2 * nTubes; ++i) {
+                int k = (j-2);
+                yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius+ 2*k*strawRadius);
+                zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
+            }
+        }
 
-    // Generate the fourth layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 6* strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
-        strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
+        if ((j!=0) && (j!=1) && (j % 2 != 0)) {
+            for (int i = 0; i <= 2 * nTubes; ++i) {
+                int k = (j-2);
+                yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 2*k*strawRadius);
+                zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
+            strawRadius);
+            }
+        }
 
-    // Generate the fourth layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 8* strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
-
-    // Generate the fourth layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 10* strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius +
-        strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
-    }
-
-    // Generate the fourth layer
-    for (int i = 0; i <= 2 * nTubes; ++i) {
-        yCenter.push_back(verticalOffset + 2 * std::sqrt(3) * strawRadius + 12* strawRadius);
-        zCenter.push_back(-nTubes * 2 * strawRadius + i * 2 * strawRadius);
-        //cout<<yCenter[i]<<" "<<zCenter[i]<<endl;
     }
 
     return std::make_pair(zCenter, yCenter);
 
-}
-
-void PlotStrawsAndTrack(const std::vector<double>& zCenter, const std::vector<double>& yCenter,
-                        double radius, const std::vector<int>& hitI, const std::vector<double>& hitR,
-                        double m, double zOrigin) {
-    TCanvas* canvas = new TCanvas("canvas", "Straws and Track", 800, 800);
-    canvas->DrawFrame(-15, 0, 15, 30, "Plot and Trajectory");
-    canvas->SetGrid();
-
-    for (size_t i = 0; i < yCenter.size(); ++i) {
-        TEllipse* strawCircle = new TEllipse(zCenter[i], yCenter[i], radius, radius);
-        strawCircle->SetLineColor(kBlack);
-        strawCircle->SetFillStyle(0);
-        strawCircle->Draw();
-
-        for (size_t j = 0; j < hitI.size(); ++j) {
-            if (static_cast<int>(i) == hitI[j]) {
-                TEllipse* hitCircle = new TEllipse(zCenter[i], yCenter[i], hitR[j], hitR[j]);
-                hitCircle->SetLineColor(kRed);
-                hitCircle->SetFillStyle(0);
-                hitCircle->Draw();
-            }
-        }
-    }
-
-    double b = -m * zOrigin;
-    double z1 = -15;
-    double z2 = 15;
-    double y1 = m * z1 + b;
-    double y2 = m * z2 + b;
-
-    TLine* trackLine = new TLine(z1, y1, z2, y2);
-    trackLine->SetLineColor(kRed);
-    trackLine->Draw();
-
-    canvas->SaveAs("StrawsAndTrack.png");
-}
-
-std::tuple<std::vector<int>, std::vector<int>, std::vector<double>> GetRadiiForTrack(const std::vector<double>& zCenter, const std::vector<double>& yCenter,
-                      double radius, double m, double zOrigin,
-                      std::vector<int>& hitN, std::vector<int>& hitI, std::vector<double>& hitR) {
-    double b = -m * zOrigin;
-
-    for (size_t i = 0; i < yCenter.size(); ++i) {
-        double d = std::abs(m * zCenter[i] - yCenter[i] + b) / std::sqrt(m * m + 1);
-        if (d <= radius) {
-            hitI.push_back(static_cast<int>(i));
-            hitR.push_back(d);
-            hitN.push_back(i);
-        }
-    }
-
-    return std::make_tuple(hitN, hitI, hitR);
-}
-
-double CalcFOM(const double* params, const FitData& data) {
-    double m = params[0];
-    double zOrigin = params[1];
-    double b = -m * zOrigin;
-    double fom = 0;
-
-    for (size_t i = 0; i < data.hitI->size(); ++i) {
-        int index = (*data.hitI)[i];
-        double d = std::abs(m * (*data.zCenter)[index] - (*data.yCenter)[index] + b) / std::sqrt(m * m + 1);
-        fom += std::abs((*data.hitR)[i] - d);
-    }
-    return fom;
-}
-
-std::pair<double, double> FitTrackFromRadii(const std::vector<double>& zCenter, const std::vector<double>& yCenter,
-                       const std::vector<int>& hitI, const std::vector<double>& hitR) {
-    ROOT::Math::Minimizer* minimizer = ROOT::Math::Factory::CreateMinimizer("Minuit2", "Migrad");
-
-    FitData data = {&zCenter, &yCenter, &hitI, &hitR};
-    ROOT::Math::Functor functor([&data](const double* params) { return CalcFOM(params, data); }, 2);
-
-    minimizer->SetFunction(functor);
-    minimizer->SetVariable(0, "m", 1.0, 0.1);
-    minimizer->SetVariable(1, "zOrigin", 0.0, 0.1);
-
-    minimizer->Minimize();
-
-    const double* results = minimizer->X();
-    double m = results[0];
-    double zOrigin = results[1];
-
-    delete minimizer;
-
-    return std::make_pair(m, zOrigin);
 }
 
 void PlotTrack(std::vector<double> trk_y,std::vector<double> trk_z) {
@@ -427,28 +342,39 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
 
   string particle = "proton";
 
+  //cout<<"test 5"<<endl;
+
   track->SetParticle(particle);
   track->SetKineticEnergy(energy);
   track->SetSensor(sensor);
   drift->SetSensor(sensor);
   drift->EnableIonTail();
 
+  //cout<<"test 6"<<endl;
+
  //double x0 = xdist;//rTube*dis(gen);
   //double y0 = -sqrt(rTube*rTube - x0*x0);
   double DOCA = 999999, simR;
   track->NewTrack(posvect[0], posvect[1], posvect[2], 0, dirvect[0], dirvect[1], dirvect[2]);
 
+  //cout<<"test 7"<<endl;
+
+
   std::vector<double> trk_x,trk_y,trk_z;
 
-  /*
+
   if (track->GetClusterDensity()==0) {
       trk_x.push_back(0); trk_y.push_back(0); trk_z.push_back(0);
       return std::make_tuple(0.5, 300, 500, trk_x, trk_y, trk_z);
     }
-  */
+
+
+  //cout<<"test 8"<<endl;
 
   for (const auto& cluster : track->GetClusters()) {
       //cout<<cluster.x<<" "<<cluster.y<<" "<<cluster.z<<" "<<cluster.t<<endl;
+
+      //cout<<"test 9"<<endl;
 
       trk_x.push_back(cluster.x);
       trk_y.push_back(cluster.y);
@@ -459,6 +385,8 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
       if (simR<DOCA) {
           DOCA=simR;
       }
+
+      //cout<<"test 10"<<endl;
 
       for (const auto& electron : cluster.electrons) {
         drift->DriftElectron(electron.x, electron.y, electron.z, electron.t);
@@ -473,6 +401,8 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
         std::vector<double> y(SigBins);
         std::vector<double> x_basket;
 
+        //cout<<"test 11"<<endl;
+
         // Collect signal
         for (int i = 0; i < SigBins; ++i) {
             x[i] = SigI + i;
@@ -483,9 +413,11 @@ std::tuple<double, double, double, std::vector<double>, std::vector<double>, std
             //cout<<x[i]<<" "<<y[i]<<endl;
         }
 
-
+    //cout<<"test 12"<<endl;
 
     auto [width, full_width] = SignalProcessing(x,y, x_basket);
+
+    //cout<<"test 13"<<endl;
 
 
     //SignalPlot(x,y);
@@ -514,7 +446,7 @@ std::vector<double> plotwidth(std::vector<double> width_l, std::vector<double> f
  // Fit the graph
  GWidth->Fit(slope, "RQ+");
 
-  TCanvas *canvas = new TCanvas("canvas", "Two TGraphs", 800, 600);
+  //TCanvas *canvas = new TCanvas("canvas", "Two TGraphs", 800, 600);
 
   std::vector<double> width_remv;
   std::vector<double> DOCA_remv;
@@ -541,8 +473,6 @@ std::vector<double> plotwidth(std::vector<double> width_l, std::vector<double> f
   }
 
     GWidth_remv->Fit(slope_remv, "RQ+");
-    //GWidth_remv->Draw("AP");
-    //slope_remv->Draw("P SAME");
 
     params.push_back(slope_remv->GetParameter(0));
     params.push_back(slope_remv->GetParameter(1));
@@ -557,24 +487,27 @@ double getDOCA(double width, std::vector<double> params) {
     return  params[0]*exp(params[1]*width)+params[2]+params[3]*width;
 }
 
-//, DriftLineRKF* drift, , TrackHeed* track
-
-
-std::vector<double> GetDTCorr(Sensor* sensor, ComponentAnalyticField* cmp, double energy, std::vector<double> dirvect) {
+std::vector<double> GetDTCorr(Sensor* sensor, ComponentAnalyticField* cmp, double energy, std::vector<double> dirvect, std::vector<double> posvect) {
 
     std::vector<double> width_l, full_width_l, j_l, DOCA_l;
 
-    for (double i =-99; i<99; i=i+parstep) {
+    //cout<<"test 17"<<endl;
 
-    if ((i==66) || (i==-66) ||(i==-52) || (i ==52)|| (i==-38)|| (i==38)|| (i==-26)|| (i==26) || (i==-16)|| (i==16)|| (i==-15)|| (i==15)|| (i==-32.5)|| (i==32.5)|| (i==-26.5)|| (i==26.5)|| (i==-19.5)|| (i==19.5)||(i==-15.5)|| (i==15.5)||(i==-2.5)|| (i==2.5)) continue;
+    for (double i = 0.0; i<5; i=i+1) {
 
     double j = i/100.0;
+
+    //cout<<"test 18"<<endl;
 
     TrackHeed track;
     DriftLineRKF drift;
     sensor->ClearSignal();
 
-    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, j, dirvect, {0, 0.01,0});
+    //cout<<"test 19"<<endl;
+
+    auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(cmp, &drift, sensor ,&track, energy, rTube, dirvect, posvect);
+
+    //cout<<"test 20"<<endl;
 
     width_l.push_back(width);
     full_width_l.push_back(full_width);
@@ -605,18 +538,6 @@ double GetAvgResidual(Sensor* sensor, ComponentAnalyticField* cmp, std::vector<d
 
 }
 
-void SetCellArray(ComponentAnalyticField* cmp, MediumMagboltz* gas) {
-
-    auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
-
-    cmp->AddTube(rTube, vTube, 0, "tube 0");
-    cmp->AddWire(0, ycell[0] , 2*rWire, vWire, "cell 0");
-    cmp->SetMedium(gas);
-
-    //PlotStraws(zcell,ycell);
-
-}
-
 std::vector<double> hemidir() {
 
     // Azimuthal angle (theta), uniformly distributed between 0 and 2pi
@@ -631,30 +552,26 @@ std::vector<double> hemidir() {
 
 }
 
-std::vector<double> sectordir() {
+std::pair<double, double> generateline() {
 
-    // Polar angle (theta), uniformly distributed between 0 and pi
-    double theta = 0.5 * M_PI * rand() / RAND_MAX + 0.25 * M_PI;
+    static std::mt19937 gen(static_cast<unsigned>(
+        std::chrono::high_resolution_clock::now().time_since_epoch().count()
+    ));
+    //static std::random_device rd;
+    //static std::mt19937 gen(rd());
+    std::uniform_real_distribution<double> dis(-2.0, 2.0);
 
-    // Convert spherical coordinates to Cartesian coordinates
-    return {0, sin(theta), cos(theta)} ;
+    double m = dis(gen);
 
-}
+    // Compute a random y-intercept (c)
+    //double c = RandomBetween(-0.1, 0.1); // Example range for intercept
 
-void PlotCellsTracks(std::vector<double> DOCA_l, std::vector<double> zCenter, std::vector<double> yCenter) {
-    // Draw the circles (straws)
-    for (size_t i = 0; i < yCenter.size(); ++i) {
+    //fix intercept to 0 for test
+    double c = 0;
 
-        TEllipse* DOCA = new TEllipse(zCenter[i], yCenter[i], DOCA_l[i]);
-        DOCA->SetFillStyle(0); // No fill
-        DOCA->SetLineColor(kBlue);
-        DOCA->Draw("same");
-    }
+    // Convert spherical coordinates to unit vector
+    return {m, c} ;
 
-}
-
-double RandomBetween(double min, double max) {
-    return min + (static_cast<double>(rand()) / RAND_MAX) * (max - min);
 }
 
 std::pair<double, double> GenerateRandomLineParameters() {
@@ -664,7 +581,7 @@ std::pair<double, double> GenerateRandomLineParameters() {
     // Generate a random angle between pi/4 and 3pi/4
     static std::random_device rd; // Random device for seeding
     static std::mt19937 gen(rd()); // Mersenne Twister generator
-    static std::uniform_real_distribution<> dis(3*M_PI / 8, 5 * M_PI / 8);
+    static std::uniform_real_distribution<> dis(5*M_PI / 16, 9 * M_PI / 16);
 
     const double angle = dis(gen);
 
@@ -676,67 +593,6 @@ std::pair<double, double> GenerateRandomLineParameters() {
 
     return {m, c};
 }
-
-/*
-std::pair<std::vector<double>, std::vector<double>> hits(double slope, double intercept, std::vector<double> ycell, std::vector<double> zcell) {
-
-    std::vector<std::pair<double, double>> ystraws;
-    std::vector<std::pair<double, double>> zstraws;
-    std::vector<double> yhits, zhits;
-
-    for (double step = 0; step<15; step=step+0.1) {
-
-        double ypos = slope*step + intercept;
-
-        for (int i = 0; i<zcell.size(); i++) {
-            double diff = sqrt(pow(ycell[i]-ypos,2)+pow(zcell[i]-step,2));
-
-            if (diff<rTube) {
-                ystraws.push_back({ypos, ycell[i]});
-                zstraws.push_back({step, zcell[i]});
-            }
-
-        }
-
-    }
-
-    // Sort the vector based on the second element of the pairs
-    std::sort(ystraws.begin(), ystraws.end(), [](const auto& a, const auto& b) {
-        return a.second < b.second;
-    });
-
-    std::sort(zstraws.begin(), zstraws.end(), [](const auto& a, const auto& b) {
-        return a.second < b.second;
-    });
-
-    // Use std::unique to remove pairs with duplicate second elements
-    auto last = std::unique(ystraws.begin(), ystraws.end(), [](const auto& a, const auto& b) {
-        return a.second == b.second;
-    });
-
-    auto last2 = std::unique(zstraws.begin(), zstraws.end(), [](const auto& a, const auto& b) {
-        return a.second == b.second;
-    });
-
-    // Resize the vector to remove redundant elements
-    ystraws.erase(last, ystraws.end());
-    zstraws.erase(last2, zstraws.end());
-
-    // Iterate through the vector and collect the first elements
-    for (const auto& pair : ystraws) {
-        yhits.push_back(pair.first);
-    }
-
-    // Iterate through the vector and collect the first elements
-    for (const auto& pair : zstraws) {
-        zhits.push_back(pair.first);
-    }
-
-    return {yhits,zhits};
-
-}
-
-*/
 
 std::tuple<std::vector<double>, std::vector<double>,std::vector<double>,std::vector<double>> hits(double slope, double intercept, std::vector<double> ycell, std::vector<double> zcell) {
 
@@ -765,7 +621,7 @@ std::tuple<std::vector<double>, std::vector<double>,std::vector<double>,std::vec
             double diffplus = sqrt(plus_z*plus_z+plus_y*plus_y);
             double diffminus = sqrt(minus_z*minus_z+minus_y*minus_y);
 
-            //cout<<"test ("<<plus_z<<","<<plus_y<<") ("<<minus_z<<","<<minus_y<<") "<<endl;
+            ////cout<<"test ("<<plus_z<<","<<plus_y<<") ("<<minus_z<<","<<minus_y<<") "<<endl;
 
             if (diffplus>diffminus) {
                 yhits.push_back(minus_y);
@@ -814,25 +670,12 @@ int main(int argc, char* argv[]) {
 
   TApplication app("app", &argc, argv);
 
-  //Get track dir
-  std::vector<double> trk_y,trk_z;
+  //auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+  //PlotStraws(ycell, zcell);
 
-  //auto [slope, intercept] = GenerateRandomLineParameters();
-    double slope = 0.75, intercept = 0;
-  for (double i = 0; i<15; i=i+0.1) {
-    trk_z.push_back(i);
-    trk_y.push_back(slope*i+intercept);
-  }
+  // Open the file in append mode
+    std::ofstream outFile("radius_vs_vertex.csv", std::ios::app);
 
-  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
-  auto [yhits, zhits, ystraw, zstraw] = hits(slope, intercept, ycell, zcell);
-
-  //Get Straw arrray
-  PlotStraws(ycell, zcell);
-  PlotTrack(trk_y,trk_z);
-
-  //Setup Garfield sim for each hit
-  std::vector<double> dirvect = {0, slope, 1};
   double energy = 100e6;
 
   string P10 = "ar_90_co2_10_atms_3.gas";
@@ -846,8 +689,34 @@ int main(int argc, char* argv[]) {
   Sensor sensor;
   SetSensor(&sensor, &cmp);
 
-  std::vector<double> DOCA_l;
-  std::vector<int> hitI;
+  for (double k = 0.2; k<1; k=k+0.1 ) {
+
+      rTube = k;
+
+    for (int j = 0; j<100; j++) {
+
+  //Get track dir
+  //std::vector<double> trk_y,trk_z;
+
+  auto [slope, intercept] = generateline();
+
+  //for (double i = 0; i<15; i=i+0.1) {
+
+    //trk_z.push_back(i);
+    //trk_y.push_back(slope*i+intercept);
+  //}
+
+  auto [ycell, zcell] = GetStrawCenters(rTube ,vert_offset);
+  auto [yhits, zhits, ystraw, zstraw] = hits(slope, intercept, ycell, zcell);
+
+  //Get Straw arrray
+  //PlotStraws(ycell, zcell);
+  //PlotTrack(trk_y,trk_z);
+
+
+  //Setup Garfield sim for each hit
+  std::vector<double> dirvect = {0, slope, intercept};
+  std::vector<double> DOCA_l, Radii;
 
   for (int i = 0; i<yhits.size(); i++) {
 
@@ -855,21 +724,51 @@ int main(int argc, char* argv[]) {
     DriftLineRKF drift;
     sensor.ClearSignal();
 
+    //cout<<"test 1"<<endl;
+
     std::vector<double> posvect = {0, yhits[i]-ystraw[i], zhits[i]-zstraw[i]};
+
+    //cout<<"test 2"<<endl;
 
     auto [DOCA, width, full_width, pos_x, pos_y, pos_z] = SetTrack(&cmp, &drift, &sensor ,&track, energy, rTube, dirvect, posvect);
 
+    //cout<<"test 3"<<endl;
+
+    auto params = GetDTCorr(&sensor, &cmp, energy, dirvect, posvect);
+
+    //cout<<"test 4"<<endl;
+
+    double radius = getDOCA(width, params);
+
+    Radii.push_back(radius);
     DOCA_l.push_back(DOCA);
 
   }
 
-  PlotCellsTracks(DOCA_l, zstraw, ystraw);
+  //cout<<"test 22"<<endl;
 
-  auto [fitslope, fitintercept] = FitRadii(zstraw,ystraw,DOCA_l);
+  //PlotRadii(DOCA_l, Radii, ystraw, zstraw);
 
-  cout<<fitintercept<<" "<<0.0<<" "<<fitintercept*fitintercept<<endl;
-  cout<<fitslope<<" "<<slope<<" "<<endl;
-  cout<<(intercept-1*fitintercept)/fitslope<<" "<<0.0<<" "<<endl;
+  //cout<<"test 23"<<endl;
+
+  auto [fitslope, fitintercept] = FitRadii(zstraw,ystraw,Radii);
+
+  //cout<<"test 24"<<endl;
+
+  //cout<<j<<" "<<-fitintercept/fitslope<<" "<<-intercept/slope<<endl;
+
+  outFile<<k<<","<<j<<","<<-fitintercept/fitslope<<endl;
+  //cout<<-fitintercept/fitslope<<endl;
+
+  //RecoZ->Fill(10.0*-fitintercept/fitslope); //[cm]
+
+  }
+  }
+
+  //RecoZ->Draw("hist");
+
+
+   outFile.close();
 
 
   app.Run();
