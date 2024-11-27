@@ -15,7 +15,7 @@ void vertex() {
     }
 
     // Create a histogram with 1000 bins, range [-10, 10]
-    TH1D *hist = new TH1D("hist", "Histogram of Values from output.csv;Value;Entries", 1000, -10, 10);
+    TH2D *hist = new TH2D("hist", "Histogram of Values from output.csv;Value;Entries", 1000, -10, 10, 10, 0, 1);
 
     // Read numbers from the file and fill the histogram
     std::string line;

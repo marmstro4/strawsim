@@ -59,8 +59,9 @@ double var_tol = 0.01;
 double remv_tol = 0.10;
 double func_tol = 0.15;
 double parstep = 5;
+int rowN = 6;
 
-TH1D *RecoZ = new TH1D("RecoZ", "RecoZ",1000,-100,100);//[cm]
+TH1D *RecoZ = new TH1D("RecoZ", "RecoZ",50000,-2,2);//[cm]
 TH2D *WidthRad = new TH2D("WidthRad", "WidthRad",100,-0.9,0.9,5000,0,5000);
 TH2D *FullWidthRad = new TH2D("FullWidthRad", "FullWidthRad",100,-0.9,0.9,5000,0,5000);
 
@@ -281,7 +282,8 @@ std::pair<std::vector<double>, std::vector<double>> GetStrawCenters(double straw
 
     // Calculate the number of tubes needed to cover +/-10 cm
     int nTubes = static_cast<int>(5 / strawRadius) + 1;
-    int nTubesH = static_cast<int>(2 / strawRadius) + 1;
+    //int nTubesH = static_cast<int>(2 / strawRadius) + 1;
+    int nTubesH = rowN;
 
     for (int j = 0; j<=2*nTubesH; j++) {
 
@@ -564,10 +566,10 @@ std::pair<double, double> generateline() {
     double m = dis(gen);
 
     // Compute a random y-intercept (c)
-    //double c = RandomBetween(-0.1, 0.1); // Example range for intercept
+    double c = RandomBetween(-0.5, 0.5); // Example range for intercept
 
     //fix intercept to 0 for test
-    double c = 0;
+    //double c = 0;
 
     // Convert spherical coordinates to unit vector
     return {m, c} ;
@@ -674,7 +676,7 @@ int main(int argc, char* argv[]) {
   //PlotStraws(ycell, zcell);
 
   // Open the file in append mode
-    std::ofstream outFile("radius_vs_vertex.csv", std::ios::app);
+    std::ofstream outFile("check.csv", std::ios::app);
 
   double energy = 100e6;
 
@@ -689,16 +691,23 @@ int main(int argc, char* argv[]) {
   Sensor sensor;
   SetSensor(&sensor, &cmp);
 
-  for (double k = 0.2; k<1; k=k+0.1 ) {
-
+  //for (double k = 0.3; k<; k=k+0.1 ) {
+    double k = 0.5;
       rTube = k;
 
-    for (int j = 0; j<100; j++) {
+    for (int j = 0; j<5000; j++) {
 
   //Get track dir
   //std::vector<double> trk_y,trk_z;
 
   auto [slope, intercept] = generateline();
+
+  cout<<slope<<","<<intercept<<endl;
+
+
+
+
+  //double slope = 1, intercept = 0;
 
   //for (double i = 0; i<15; i=i+0.1) {
 
@@ -712,7 +721,6 @@ int main(int argc, char* argv[]) {
   //Get Straw arrray
   //PlotStraws(ycell, zcell);
   //PlotTrack(trk_y,trk_z);
-
 
   //Setup Garfield sim for each hit
   std::vector<double> dirvect = {0, slope, intercept};
@@ -757,18 +765,24 @@ int main(int argc, char* argv[]) {
 
   //cout<<j<<" "<<-fitintercept/fitslope<<" "<<-intercept/slope<<endl;
 
-  outFile<<k<<","<<j<<","<<-fitintercept/fitslope<<endl;
+  //if (abs(-fitintercept/fitslope)>0.0001 && (abs(-fitintercept/fitslope)<2)) {
+
+  //outFile<<rowN<<","<<j<<","<<-fitintercept/fitslope<<endl;
+  cout<<j<<","<<-fitintercept/fitslope<<","<<-intercept/slope<<";"<<abs(-fitintercept/fitslope+intercept/slope)<<endl;
+  outFile<<j<<","<<-fitintercept/fitslope<<","<<-intercept/slope<<";"<<(-fitintercept/fitslope+intercept/slope)<<endl;
+
+  //}
   //cout<<-fitintercept/fitslope<<endl;
 
   //RecoZ->Fill(10.0*-fitintercept/fitslope); //[cm]
 
-  }
+  //}
   }
 
   //RecoZ->Draw("hist");
 
 
-   outFile.close();
+   //outFile.close();
 
 
   app.Run();
